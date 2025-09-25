@@ -1,61 +1,200 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Habit App
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 日本語ガイド
 
-## About Laravel
+### 概要
+Laravel 12 製の習慣トラッカーです。毎日のタスク（チェックイン）を登録し、達成状況やスキップ理由を記録しながら、タイムログや日報も管理できます。カレンダー表示や履歴ページで進捗を振り返ることが可能です。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 主な機能
+- 当日のタスクを作成・編集し、完了やスキップ（理由付き）を記録。前日の内容を自動引き継ぎ。
+- ブラウザ上のタイマーと API で作業時間を記録し、一覧やカレンダーで可視化。
+- 日報に活動内容と気分 / 努力度 (1-5) を残し、履歴を参照・編集。
+- FullCalendar によりタスクとタイムログを重ねて表示。
+- 直近 30 日間の非スキップ率を集計し、平均値やチャートで確認。
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 技術スタック
+- PHP 8.2 / Laravel 12
+- MySQL 8（Docker 構成では phpMyAdmin 付き）
+- Vite / Tailwind CSS / Alpine.js
+- Docker Compose（PHP-FPM, Nginx, MySQL, phpMyAdmin）
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 1. ローカル環境での動作
+要件: PHP 8.2+, Composer, Node.js 18+, npm 9+
 
-## Learning Laravel
+```bash
+cp .env.example .env              # DB_* や APP_URL を環境に合わせて変更
+composer install
+npm install
+php artisan key:generate
+php artisan migrate --seed        # シードが不要なら省略可
+npm run dev                       # Vite 開発サーバー (http://localhost:5173)
+php artisan serve                 # Laravel サーバー (http://127.0.0.1:8000)
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+`vite: command not found` が表示された場合は `npm install` が完了しているか確認してください。
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 2. Docker ワークフロー
+要件: Docker Desktop または Docker Engine + Docker Compose v2
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. `.env` の DB 接続設定をコンテナ向けに変更します。
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=db
+   DB_PORT=3306
+   DB_DATABASE=laravel
+   DB_USERNAME=laravel
+   DB_PASSWORD=secret
+   ```
+2. コンテナをビルドして起動します。
+   ```bash
+   docker compose up --build -d
+   ```
+3. 初回のみ、PHP コンテナ内で依存関係をインストールします。
+   ```bash
+   docker compose exec app composer install
+   docker compose exec app npm install
+   docker compose exec app php artisan key:generate
+   docker compose exec app php artisan migrate --seed
+   ```
+4. 必要に応じて Vite の開発サーバーを起動します。
+   ```bash
+   docker compose exec app npm run dev -- --host 0.0.0.0 --port 5173
+   ```
 
-## Laravel Sponsors
+アクセス先:
+- アプリ (Nginx) → http://localhost:8080
+- Vite HMR → http://localhost:5173
+- phpMyAdmin → http://localhost:8081 (`laravel` / `secret`)
+- MySQL → localhost:3308（外部クライアント接続用）
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+終了する場合:
+```bash
+docker compose down
+```
 
-### Premium Partners
+### アセットのビルド
+```bash
+npm run build
+```
+Docker 使用時:
+```bash
+docker compose exec app npm run build
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### テスト
+```bash
+php artisan test
+```
+Docker 使用時:
+```bash
+docker compose exec app php artisan test
+```
 
-## Contributing
+### よく使う Artisan コマンド
+```bash
+php artisan migrate:fresh --seed
+php artisan queue:listen
+php artisan cache:clear
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## English Guide
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Overview
+A Laravel 12 application for tracking daily habits and time usage. Users can plan tasks, mark results, log daily reports, and review progress from calendar and history views.
 
-## Security Vulnerabilities
+### Features
+- Plan, complete, or skip daily check-ins with optional reasons and automatic carry-over from the previous day.
+- Lightweight time tracking with browser timers, API-backed logs, and calendar overlays.
+- Daily reports capturing reflections plus mood and effort ratings.
+- Dashboard calendar that combines scheduled tasks with recorded time logs via FullCalendar.
+- History page visualising non-skip rates and trends across the last 30 days.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Tech Stack
+- PHP 8.2, Laravel 12
+- MySQL 8 (phpMyAdmin provided in Docker stack)
+- Vite, Tailwind CSS, Alpine.js
+- Docker Compose: PHP-FPM, Nginx, MySQL, phpMyAdmin
+
+### 1. Local Development
+Prerequisites: PHP 8.2+, Composer, Node.js 18+, npm 9+
+
+```bash
+cp .env.example .env              # adjust DB_*, APP_URL, etc.
+composer install
+npm install
+php artisan key:generate
+php artisan migrate --seed        # optional seeders if available
+npm run dev                       # Vite dev server (http://localhost:5173)
+php artisan serve                 # Laravel app (http://127.0.0.1:8000)
+```
+
+If you see `vite: command not found`, ensure `npm install` completed successfully.
+
+### 2. Docker Workflow
+Prerequisites: Docker Desktop or Docker Engine + Docker Compose v2
+
+1. Adjust `.env` to point at the containers:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=db
+   DB_PORT=3306
+   DB_DATABASE=laravel
+   DB_USERNAME=laravel
+   DB_PASSWORD=secret
+   ```
+2. Build and start the stack:
+   ```bash
+   docker compose up --build -d
+   ```
+3. Install dependencies inside the PHP container (first run only):
+   ```bash
+   docker compose exec app composer install
+   docker compose exec app npm install
+   docker compose exec app php artisan key:generate
+   docker compose exec app php artisan migrate --seed
+   ```
+4. Start the Vite dev server inside the container when needed:
+   ```bash
+   docker compose exec app npm run dev -- --host 0.0.0.0 --port 5173
+   ```
+
+Service endpoints:
+- App (Nginx) → http://localhost:8080
+- Vite HMR → http://localhost:5173
+- phpMyAdmin → http://localhost:8081 (default credentials `laravel` / `secret`)
+- MySQL → localhost:3308 (for external clients)
+
+Stop and remove containers when finished:
+```bash
+docker compose down
+```
+
+### Building Assets
+```bash
+npm run build
+```
+When using Docker:
+```bash
+docker compose exec app npm run build
+```
+
+### Testing
+```bash
+php artisan test
+```
+With Docker:
+```bash
+docker compose exec app php artisan test
+```
+
+### Useful Artisan Commands
+```bash
+php artisan migrate:fresh --seed
+php artisan queue:listen
+php artisan cache:clear
+```
 
 ## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open source under the MIT license.
