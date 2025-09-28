@@ -1,7 +1,7 @@
-# Habit App
+# Habit-tracking app
 
 ## 日本語ガイド
-
+An explanation in English is provided below
 ### 概要
 Laravel 12 製の習慣トラッカーです。毎日のタスク（チェックイン）を登録し、達成状況やスキップ理由を記録しながら、タイムログや日報も管理できます。カレンダー表示や履歴ページで進捗を振り返ることが可能です。
 
